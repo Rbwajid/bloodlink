@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+:root {
+  --blood-red: #dc2626;
+  --blood-red-dark: #b91c1c;
+  --blood-red-light: #fecaca;
+}
