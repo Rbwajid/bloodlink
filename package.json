@@ -1,0 +1,18 @@
+{
+  "name": "bloodlink",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BloodLink - Blood Donor & Recipient Platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=apps/api",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build:api": "npm run build --workspace=apps/api",
+    "build:web": "npm run build --workspace=apps/web",
+    "lint": "npm run lint --workspaces --if-present",
+    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules"
+  }
+}

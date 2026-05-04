@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BloodType {
+  A_POS
+  A_NEG
+  B_POS
+  B_NEG
+  AB_POS
+  AB_NEG
+  O_POS
+  O_NEG
+}
+
+enum UrgencyLevel {
+  CRITICAL
+  URGENT
+  ROUTINE
+}
+
+enum RequestStatus {
+  OPEN
+  MATCHED
+  FULFILLED
+  CANCELLED
+  EXPIRED
+}
+
+enum DonorStatus {
+  AVAILABLE
+  UNAVAILABLE
+  COOLDOWN
+}
+
+enum UserRole {
+  DONOR
+  RECIPIENT
+  BOTH
+  ADMIN
+}
+
+model User {
+  id              String      @id @default(cuid())
+  email           String      @unique
+  phone           String?
+  password        String
+  name            String
+  bloodType       BloodType?
+  role            UserRole    @default(BOTH)
+  donorStatus     DonorStatus @default(AVAILABLE)
+  avatar          String?
+  city            String?
+  state           String?
+  latitude        Float?
+  longitude       Float?
+  lastDonationAt  DateTime?
+  isVerified      Boolean     @default(false)
+  isPhoneVerified Boolean     @default(false)
+  totalDonations  Int         @default(0)
+  badges          String[]    @default([])
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  bloodRequests   BloodRequest[]   @relation("Requester")
+  donorResponses  DonorResponse[]
+  sentMessages    Message[]        @relation("Sender")
+  chatRoomsAsUser1 ChatRoom[]      @relation("ChatUser1")
+  chatRoomsAsUser2 ChatRoom[]      @relation("ChatUser2")
+  notifications   Notification[]
+}
+
+model BloodRequest {
+  id            String        @id @default(cuid())
+  requesterId   String
+  requester     User          @relation("Requester", fields: [requesterId], references: [id])
+  bloodType     BloodType
+  unitsNeeded   Int           @default(1)
+  urgency       UrgencyLevel  @default(ROUTINE)
+  status        RequestStatus @default(OPEN)
+  hospitalName  String
+  hospitalCity  String
+  hospitalState String?
+  latitude      Float?
+  longitude     Float?
+  description   String?
+  deadline      DateTime?
+  contactPhone  String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  donorResponses DonorResponse[]
+
+  @@index([bloodType, status])
+  @@index([status, urgency])
+}
+
+model DonorResponse {
+  id            String       @id @default(cuid())
+  requestId     String
+  request       BloodRequest @relation(fields: [requestId], references: [id])
+  donorId       String
+  donor         User         @relation(fields: [donorId], references: [id])
+  message       String?
+  isAccepted    Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+
+  @@unique([requestId, donorId])
+}
+
+model ChatRoom {
+  id        String    @id @default(cuid())
+  user1Id   String
+  user1     User      @relation("ChatUser1", fields: [user1Id], references: [id])
+  user2Id   String
+  user2     User      @relation("ChatUser2", fields: [user2Id], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
+
+  @@unique([user1Id, user2Id])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  chatRoomId String
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id])
+  senderId   String
+  sender     User     @relation("Sender", fields: [senderId], references: [id])
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([chatRoomId, createdAt])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  body      String
+  type      String
+  data      Json?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+}
